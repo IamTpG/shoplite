@@ -23,12 +23,19 @@ const unsubscribe = context.subscribe(() => {
 onScopeDispose(unsubscribe)
 onMounted(() => reportReady(host))
 
+type CheckoutUiError = PosErrorCode | 'INVALID_CASH_FORMAT'
+
 const promoDraft = ref(snapshot.value.promoCode ?? '')
 const promoError = ref('')
 const promoNotice = ref('')
 const paymentMethod = ref<PaymentMethod | ''>('')
 const cashDraft = ref('')
-const paymentError = ref<PosErrorCode>()
+const paymentError = ref<CheckoutUiError>()
+const cashErrorMessage = computed(() => {
+  if (paymentError.value === 'INVALID_CASH_FORMAT') return 'Nhập số tiền hợp lệ bằng chữ số (VD: 100000).'
+  if (paymentError.value === 'INSUFFICIENT_CASH') return posErrors.INSUFFICIENT_CASH
+  return ''
+})
 const locked = computed(() => saleLocked(snapshot.value))
 const receipt = computed(() => snapshot.value.transaction.status === 'succeeded'
   ? snapshot.value.transaction.receipt : null)
@@ -71,9 +78,15 @@ async function pay() {
     paymentError.value = 'INVALID_PAYMENT'
     return
   }
-  if (paymentMethod.value === 'cash' && change.value === null) {
-    paymentError.value = 'INSUFFICIENT_CASH'
-    return
+  if (paymentMethod.value === 'cash') {
+    if (!isVnd(cash.value)) {
+      paymentError.value = 'INVALID_CASH_FORMAT'
+      return
+    }
+    if (change.value === null) {
+      paymentError.value = 'INSUFFICIENT_CASH'
+      return
+    }
   }
   const result = await context.submitCheckout(paymentMethod.value === 'cash'
     ? { paymentMethod: 'cash', cashReceivedVnd: cash.value }
@@ -142,11 +155,11 @@ function newSale() {
           <template v-if="paymentMethod === 'cash'">
             <label for="cash-received" class="label cash-label">Tiền khách đưa (₫)</label>
             <input id="cash-received" v-model="cashDraft" type="text" inputmode="numeric"
-              :aria-invalid="paymentError === 'INSUFFICIENT_CASH'"
-              :aria-describedby="paymentError === 'INSUFFICIENT_CASH' ? 'cash-error' : undefined"
+              :aria-invalid="Boolean(cashErrorMessage)"
+              :aria-describedby="cashErrorMessage ? 'cash-error' : undefined"
               @input="paymentError = undefined">
-            <p v-if="paymentError === 'INSUFFICIENT_CASH'" id="cash-error" role="alert" class="error">
-              {{ posErrors[paymentError] }}
+            <p v-if="cashErrorMessage" id="cash-error" role="alert" class="error">
+              {{ cashErrorMessage }}
             </p>
             <p v-if="change !== null" class="hint">Tiền thừa <strong>{{ formatVnd(change) }}</strong></p>
           </template>
@@ -156,7 +169,7 @@ function newSale() {
           <div><dt>Giảm giá</dt><dd class="discount">{{ formatVnd(snapshot.discountVnd) }}</dd></div>
           <div class="total"><dt>Tổng phải trả</dt><dd>{{ formatVnd(snapshot.totalVnd) }}</dd></div>
         </dl>
-        <p v-if="paymentError && paymentError !== 'INVALID_PAYMENT' && paymentError !== 'INSUFFICIENT_CASH'" role="alert" class="error">
+        <p v-if="paymentError && paymentError !== 'INVALID_PAYMENT' && paymentError !== 'INVALID_CASH_FORMAT' && paymentError !== 'INSUFFICIENT_CASH'" role="alert" class="error">
           {{ posErrors[paymentError] }}
         </p>
         <p v-if="!snapshot.lines.length" id="empty-checkout" class="hint">{{ posErrors.EMPTY_CART }}</p>

@@ -189,3 +189,31 @@ test('a lost committed response can be retried after remounting with the origina
   expect(attempts[1]).toEqual(attempts[0])
   expect(retriedId).toBe(committedId)
 })
+
+test('checkout validates missing payment method, invalid cash format, and 502 unknown state', async ({ page }) => {
+  await page.goto('/pos')
+  await addCoffee(page).click()
+
+  await confirm(page).click()
+  await expect(checkout(page).getByRole('alert')).toHaveText('Chọn một phương thức thanh toán.')
+
+  await page.getByRole('radio', { name: 'Tiền mặt' }).check()
+  const received = page.getByRole('textbox', { name: 'Tiền khách đưa (₫)' })
+  for (const invalidCash of ['abc', '-50000']) {
+    await received.fill(invalidCash)
+    await confirm(page).click()
+    await expect(received).toHaveAttribute('aria-invalid', 'true')
+    await expect(checkout(page).getByRole('alert')).toHaveText('Nhập số tiền hợp lệ bằng chữ số (VD: 100000).')
+  }
+
+  await received.fill('49000')
+  await confirm(page).click()
+  await expect(received).toHaveAttribute('aria-invalid', 'true')
+  await expect(checkout(page).getByRole('alert')).toHaveText('Nhập số tiền khách đưa đủ để thanh toán.')
+
+  await page.route('**/api/checkout', (route) => route.fulfill({ status: 502, json: { code: 'UPSTREAM_UNAVAILABLE' } }))
+  await received.fill('50000')
+  await confirm(page).click()
+  await expect(checkout(page).getByRole('alert')).toContainText('Chưa nhận được kết quả giao dịch.')
+  await expect(page.getByRole('button', { name: 'Thử lại giao dịch' })).toBeVisible()
+})

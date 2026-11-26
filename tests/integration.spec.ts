@@ -244,3 +244,10 @@ test('changing only the catalog entry loads the new artifact alongside the exist
     await rm(directory, { recursive: true, force: true })
   }
 })
+
+test('manifest load failure puts all three regions into failed state', async ({ page }) => {
+  await page.route('**/mfe-manifest.json', (route) => route.fulfill({ status: 500 }))
+  await page.goto('/pos')
+  await expect(page.locator('[data-state="failed"]')).toHaveCount(3)
+  await expect(page.locator(ready)).toHaveCount(0)
+})
