@@ -1,0 +1,14 @@
+{
+  "name": "@pos/domain",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./contract.ts",
+    "./mount": "./mount.ts",
+    "./demo": "./demo.ts",
+    "./preview": "./preview.ts",
+    "./pricing": "./pricing.ts",
+    "./store": "./store.ts",
+    "./messages": "./messages.ts"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@pos/checkout",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "preview": "vite --port 4173 --strictPort",
+    "typecheck": "vue-tsc -p tsconfig.json",
+    "postbuild": "node ../../scripts/stage-remote.mjs checkout"
+  },
+  "dependencies": {
+    "@pos/domain": "*",
+    "vue": "3.5.30"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.2",
+    "vite": "7.3.1",
+    "vue-tsc": "^3.2.0"
+  }
+}

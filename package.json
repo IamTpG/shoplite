@@ -1,0 +1,17 @@
+{
+  "name": "binmart-pos",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "workspaces": ["apps/*", "packages/*", "services/*"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "start": "node scripts/start.mjs",
+    "test": "node --test tests/*.test.mjs && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "typescript": "5.9.3"
+  }
+}

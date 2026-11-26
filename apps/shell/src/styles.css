@@ -1,0 +1,30 @@
+:root {
+  --pos-primary: #2a14b4;
+  --pos-muted: #464554;
+  --pos-border: #d5d7e2;
+  --pos-outline: #777586;
+  --pos-error: #ba1a1a;
+  --pos-mono: 'Spline Sans Mono', ui-monospace, monospace;
+  font: 400 14px/1.45 'Be Vietnam Pro', system-ui, sans-serif;
+  color: #1b1b23;
+  background: #f6f7fb;
+}
+body { margin: 0; }
+.page { width: min(1440px, calc(100% - 32px)); margin-inline: auto; }
+.topbar { background: white; border-bottom: 1px solid var(--pos-border); }
+.brand { display: flex; align-items: center; gap: 12px; min-height: 64px; font-size: 18px; font-weight: 750; }
+.brand-pos { color: var(--pos-primary); }
+.mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--pos-primary); color: white; }
+main { padding: 28px 0 48px; }
+h1, h2 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; text-wrap: balance; }
+h1 { margin: 0 0 20px; font-size: 28px; line-height: 1.25; letter-spacing: -.25px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+section { min-width: 0; border: 1px solid var(--pos-border); border-radius: 12px; background: white; box-shadow: 0 1px 2px #1b1b230a; }
+h2 { margin: 0; padding: 16px 20px; font-size: 18px; font-weight: 650; line-height: 1.35; }
+[data-loading], .fallback { padding: 0 20px 16px; color: var(--pos-muted); }
+.fallback p { margin: 0 0 12px; }
+.fallback button { font: inherit; color: white; background: var(--pos-primary); border: 0; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.fallback button:focus-visible { outline: 2px solid var(--pos-primary); outline-offset: 2px; }
+@media (max-width: 1023px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+}

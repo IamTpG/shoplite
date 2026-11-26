@@ -1,0 +1,5 @@
+{
+  "catalog": { "tag": "pos-catalog", "entry": "/mfe/catalog/1.0.0/main.js", "contractVersion": 1 },
+  "cart": { "tag": "pos-cart", "entry": "/mfe/cart/1.0.0/main.js", "contractVersion": 1 },
+  "checkout": { "tag": "pos-checkout", "entry": "/mfe/checkout/1.0.0/main.js", "contractVersion": 1 }
+}

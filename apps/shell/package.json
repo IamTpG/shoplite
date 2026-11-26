@@ -1,0 +1,8 @@
+{
+  "name": "@pos/shell",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "vite build", "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": { "@pos/domain": "*" },
+  "devDependencies": { "vite": "7.3.1" }
+}

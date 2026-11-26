@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "src",
+    "../../packages/pos-domain/*.ts"
+  ],
+  "compilerOptions": {
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  }
+}

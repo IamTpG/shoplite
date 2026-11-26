@@ -1,0 +1,40 @@
+{
+  "$schema": "../../node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": { "analytics": false },
+  "projects": {
+    "cart": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/entry.ts",
+            "tsConfig": "tsconfig.json",
+            "outputPath": "dist",
+            "outputHashing": "none",
+            "index": false,
+            "aot": true
+          },
+          "configurations": {
+            "preview": {
+              "browser": "src/preview.ts",
+              "index": "index.html",
+              "optimization": false,
+              "sourceMap": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "cart:build:preview",
+            "prebundle": { "exclude": ["@pos/domain"] }
+          }
+        }
+      }
+    }
+  }
+}

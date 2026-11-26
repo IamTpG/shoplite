@@ -1,0 +1,24 @@
+{
+  "name": "@pos/cart",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "ng build",
+    "preview": "ng serve --port 4172",
+    "typecheck": "ngc -p tsconfig.json --noEmit",
+    "postbuild": "node ../../scripts/stage-remote.mjs cart"
+  },
+  "dependencies": {
+    "@angular/core": "21.2.0",
+    "@angular/elements": "21.2.0",
+    "@angular/platform-browser": "21.2.0",
+    "@pos/domain": "*",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@angular/build": "21.2.0",
+    "@angular/cli": "21.2.0",
+    "@angular/compiler": "21.2.0",
+    "@angular/compiler-cli": "21.2.0"
+  }
+}
