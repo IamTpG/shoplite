@@ -134,3 +134,61 @@ test('mock validates structure and business rules independently of the shell', a
   }
   assert.equal((await checkout(upstream, 'validation', cashOrder)).body.orderId, 'POS-0001')
 })
+
+test('mock rejects missing or invalid Idempotency-Key and malformed cash/promo payloads', async (t) => {
+  const upstream = await listen(t, createMockApi())
+
+  const missingKey = await fetch(upstream + '/api/checkout', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(cardOrder),
+  })
+  assert.equal(missingKey.status, 400)
+  assert.equal((await missingKey.json()).code, 'INVALID_REQUEST')
+
+  for (const key of ['   ', 'k'.repeat(129)]) {
+    const res = await checkout(upstream, key, cardOrder)
+    assert.equal(res.status, 400)
+    assert.equal(res.body.code, 'INVALID_REQUEST')
+  }
+
+  for (const badOrder of [
+    { ...cardOrder, promoCode: 123 },
+    { items: [{ productId: 'tea', quantity: 1 }], promoCode: null, paymentMethod: 'cash' },
+  ]) {
+    const res = await checkout(upstream, 'bad-shape', badOrder)
+    assert.equal(res.status, 400)
+    assert.equal(res.body.code, 'INVALID_REQUEST')
+  }
+})
+
+test('BFF rejects invalid paths, unsupported routes, and non-JSON upstream responses', async (t) => {
+  const upstream = await listen(t, createServer((request, response) => {
+    if (request.url === '/api/products') {
+      response.writeHead(200, { 'content-type': 'text/plain' }).end('not-json')
+      return
+    }
+    response.writeHead(200, { 'content-type': 'application/json' }).end('{bad-json')
+  }))
+  const bff = await listen(t, createBff({ upstream }))
+
+  const nonJson = await fetch(bff + '/api/products')
+  assert.equal(nonJson.status, 502)
+  assert.equal((await nonJson.json()).code, 'UPSTREAM_UNAVAILABLE')
+
+  const badJson = await fetch(bff + '/api/checkout', { method: 'POST', body: '{}' })
+  assert.equal(badJson.status, 502)
+  assert.equal((await badJson.json()).code, 'UPSTREAM_UNAVAILABLE')
+
+  const badPath = await fetch(bff + '/%E0%A4%A')
+  assert.equal(badPath.status, 400)
+  assert.equal((await badPath.json()).code, 'INVALID_PATH')
+
+  const traversal = await fetch(bff + '/mfe/../../package.json')
+  assert.equal(traversal.status, 404)
+  assert.equal((await traversal.json()).code, 'NOT_FOUND')
+
+  const wrongMethod = await fetch(bff + '/api/products', { method: 'POST' })
+  assert.equal(wrongMethod.status, 404)
+  assert.equal((await wrongMethod.json()).code, 'NOT_FOUND')
+})

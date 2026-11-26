@@ -99,3 +99,20 @@ test('a definitive decline preserves the cart and allows a fresh attempt', async
   await context.submitCheckout({ paymentMethod: 'mock-card' })
   assert.notEqual(attempts[1].key, attempts[0].key)
 })
+
+test('store rejects invalid products, promo codes, payment methods, and rejected checkout promises', async () => {
+  const context = createPosContext(list, async () => { throw new Error('network down') })
+
+  assert.equal(context.addItem({ id: '', sku: 'BAD', name: '', unitPriceVnd: -1 }).code, 'INVALID_PRODUCT')
+  assert.equal(context.setQuantity('unknown', 1).code, 'INVALID_PRODUCT')
+  assert.equal(context.removeItem('unknown').code, 'INVALID_PRODUCT')
+  assert.equal(context.startNewSale().code, 'SALE_LOCKED')
+
+  context.addItem(coffee)
+  assert.equal(context.applyPromo('SAI_MA').code, 'INVALID_PROMO')
+  assert.equal((await context.submitCheckout({ paymentMethod: 'crypto' })).code, 'INVALID_PAYMENT')
+
+  const result = await context.submitCheckout({ paymentMethod: 'mock-card' })
+  assert.deepEqual(result, { ok: false, code: 'CHECKOUT_UNKNOWN' })
+  assert.equal(context.getSnapshot().transaction.status, 'unknown')
+})
