@@ -84,14 +84,17 @@ function loadRegion(region: HTMLElement, tag: string, manifest: unknown) {
   }
 
   const config = manifest as { tag?: unknown; entry?: unknown; contractVersion?: unknown } | undefined
-  if (config?.tag !== tag || config.contractVersion !== CONTRACT_VERSION || typeof config.entry !== 'string'
-    || !config.entry.startsWith('/mfe/') || new URL(config.entry, location.origin).origin !== location.origin) {
+  let entryUrl: URL | undefined
+  try { if (typeof config?.entry === 'string') entryUrl = new URL(config.entry, location.origin) } catch { /* Invalid manifest URL. */ }
+  if (config?.tag !== tag || config.contractVersion !== CONTRACT_VERSION || !entryUrl
+    || !['http:', 'https:'].includes(entryUrl.protocol)
+    || (entryUrl.origin !== location.origin && entryUrl.protocol !== 'https:')) {
     fallback('REMOTE_CONFIGURATION_INVALID', reload, 'Tải lại trang')
     return
   }
 
   loading()
-  void loadEntry(config.entry, tag).then(mount, (error) => {
+  void loadEntry(entryUrl.href, tag).then(mount, (error) => {
     console.error(tag, error)
     fallback('REMOTE_LOAD_FAILED', reload, 'Tải lại trang')
   })

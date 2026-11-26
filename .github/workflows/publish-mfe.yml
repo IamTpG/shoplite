@@ -1,0 +1,77 @@
+name: Publish micro frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      mfe:
+        description: Micro frontend to publish
+        type: choice
+        required: true
+        options: [catalog, cart, checkout]
+      version:
+        description: Immutable artifact version, for example 1.0.1
+        type: string
+        required: true
+
+concurrency:
+  group: mfe-manifest-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      MFE: ${{ inputs.mfe }}
+      VERSION: ${{ inputs.version }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      MFE_PUBLIC_BASE_URL: ${{ secrets.MFE_PUBLIC_BASE_URL }}
+      APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Validate inputs and configuration
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9._-]+)?$ ]]
+          test -n "$R2_BUCKET" -a -n "$R2_ENDPOINT" -a -n "$MFE_PUBLIC_BASE_URL" -a -n "$APP_BASE_URL"
+          npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm run build -w "@pos/$MFE"
+      - name: Stage immutable artifact
+        run: node scripts/stage-remote.mjs "$MFE" "$VERSION"
+      - name: Save current manifest and publish artifact
+        run: |
+          aws s3 cp "s3://$R2_BUCKET/mfe-manifest.json" previous-manifest.json --endpoint-url "$R2_ENDPOINT"
+          if aws s3api head-object --bucket "$R2_BUCKET" --key "mfe/$MFE/$VERSION/main.js" --endpoint-url "$R2_ENDPOINT" >/dev/null 2>&1; then
+            echo "Version already exists: $MFE@$VERSION" >&2
+            exit 1
+          fi
+          aws s3 sync "services/bff/dist/mfe/$MFE/$VERSION/" "s3://$R2_BUCKET/mfe/$MFE/$VERSION/" \
+            --endpoint-url "$R2_ENDPOINT" --cache-control 'public,max-age=31536000,immutable'
+      - name: Point only the selected MFE to the new version
+        run: |
+          node scripts/update-mfe-manifest.mjs previous-manifest.json candidate-manifest.json "$MFE" "$VERSION" "$MFE_PUBLIC_BASE_URL"
+          aws s3 cp candidate-manifest.json "s3://$R2_BUCKET/mfe-manifest.json" \
+            --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control no-store
+      - name: Smoke test deployed release
+        run: BASE_URL="$APP_BASE_URL" npm run smoke
+      - name: Restore previous manifest after failure
+        if: failure()
+        run: |
+          if test -f previous-manifest.json; then
+            aws s3 cp previous-manifest.json "s3://$R2_BUCKET/mfe-manifest.json" \
+              --endpoint-url "$R2_ENDPOINT" --content-type application/json --cache-control no-store
+            BASE_URL="$APP_BASE_URL" npm run smoke
+          else
+            echo 'No previous manifest was available; automatic rollback could not run.' >&2
+            exit 1
+          fi

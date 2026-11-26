@@ -33,6 +33,23 @@ function staticFile(path) {
 }
 
 async function serveFile(request, response, path) {
+  if (path === '/mfe-manifest.json' && process.env.MFE_MANIFEST_URL) {
+    try {
+      const upstream = await fetch(process.env.MFE_MANIFEST_URL, { signal: AbortSignal.timeout(5_000) })
+      if (!upstream.ok) throw new Error('Manifest unavailable')
+      const content = await upstream.arrayBuffer()
+      JSON.parse(new TextDecoder().decode(content))
+      response.writeHead(200, {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': content.byteLength,
+        'cache-control': 'no-store',
+        'x-content-type-options': 'nosniff',
+      })
+      return response.end(request.method === 'HEAD' ? undefined : Buffer.from(content))
+    } catch {
+      return jsonError(response, 502, 'MANIFEST_UNAVAILABLE', 'Không tải được cấu hình micro frontend.')
+    }
+  }
   const file = staticFile(path)
   const type = mime.get(extname(file ?? ''))
   if (!file || !type) return jsonError(response, 404, 'NOT_FOUND', 'Không tìm thấy tài nguyên.')
