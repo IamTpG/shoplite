@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: binmart-pos
+    name: shoplite
     runtime: node
     plan: free
     rootDir: .
