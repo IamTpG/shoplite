@@ -1,6 +1,8 @@
-# BinMart POS
+# ShopLite
 
-BinMart POS là demo bán hàng tại quầy. Shell ghép danh mục React, giỏ hàng Angular AOT và thanh toán Vue trên `/pos`. BFF phục vụ frontend và chuyển tiếp yêu cầu sang mock API Node.js, nơi tính lại giá và giữ giao dịch trong bộ nhớ.
+ShopLite là demo bán hàng tại quầy. Shell ghép danh mục React, giỏ hàng Angular AOT và thanh toán Vue trên `/pos`. BFF phục vụ frontend và chuyển tiếp yêu cầu sang mock API Node.js, nơi tính lại giá và giữ giao dịch trong bộ nhớ.
+
+Giao diện sáng/tối dùng chung biến CSS `--pos-*` qua Shadow DOM. Để kiểm tra giao diện, chạy `npm run build` rồi `npm test`; các luồng trình duyệt dùng BFF và mock API có sẵn của dự án.
 
 ## Chạy demo
 

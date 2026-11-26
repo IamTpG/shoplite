@@ -1,11 +1,13 @@
 ---
-name: BinMart POS
+name: ShopLite
 description: Hệ thống thiết kế tối giản, hiện đại và chính xác dành cho ứng dụng bán hàng (POS) tại quầy thu ngân cửa hàng bán lẻ.
 ---
 
 ## Overview
 
-**BinMart POS** hướng đến sự gọn gàng, tốc độ thao tác và độ chính xác cao cho nhân viên thu ngân trong môi trường bán lẻ bận rộn. Giao diện sử dụng nền sáng dịu mắt kết hợp thẻ sản phẩm trắng tinh khiết, độ tương phản rõ ràng và màu chủ đạo xanh chàm (Indigo) chuyên nghiệp. Mọi thông tin về giá tiền (VND), tồn kho, giỏ hàng và tổng thanh toán được sắp xếp theo phân cấp thị giác mạch lạc để thu ngân xử lý đơn hàng chỉ trong vài giây.
+**ShopLite** ưu tiên thao tác nhanh tại quầy: lưới thẻ có minh họa để nhận diện sản phẩm và so giá, giỏ hàng để chỉnh số lượng, thanh toán để đối chiếu tổng tiền trước khi xác nhận.
+
+Dial: ENERGY 2 / RHYTHM 2 / MOTION 1. Màu tím chàm dành cho nhận diện, focus, lọc đang chọn và hành động chính. Túi mua sắm có mã vạch gợi thao tác tại quầy; các đường kẻ mảnh phân tách mã giảm giá, cách trả và tổng tiền. Chữ sans giữ dấu tiếng Việt dễ đọc; chữ số tabular ổn định khi số tiền thay đổi. Minh họa và nhóm sản phẩm demo chỉ thuộc giao diện; giá, số lượng và phương thức thanh toán vẫn theo hệ thống hiện có.
 
 ## Colors
 
@@ -20,7 +22,7 @@ colors:
   warning-container: "#FEF3C7"
   on-warning-container: "#78350F"
   light:
-    primary: "#2A14B4"
+    primary: "#3900B6"
     on-primary: "#FFFFFF"
     primary-container: "#4338CA"
     on-primary-container: "#C1BEFF"
@@ -173,7 +175,7 @@ typography:
 
 ## Layout & Spacing
 
-Giao diện POS ưu tiên màn hình máy tính để bàn (`1280px` trở lên) với bố cục 3 cột hiển thị đồng thời không cần chuyển trang: Danh sách sản phẩm (50%), Giỏ hàng (25%), và Thanh toán & Khuyến mãi (25%). Trên màn hình nhỏ hơn (`< 1024px`), các cột tự động xếp chồng theo chiều dọc. Hệ thống sử dụng thang khoảng cách bội số của `4px` và `8px`.
+Từ `1100px`, ba vùng hiển thị cạnh nhau và danh mục rộng nhất. Từ `700px`, danh mục nằm trên giỏ hàng và thanh toán hai cột. Dưới `700px`, cả ba vùng xếp dọc; liên kết đầu trang giúp đến thẳng vùng cần thao tác mà không che nội dung.
 
 ```yaml
 spacing:

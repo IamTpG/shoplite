@@ -76,6 +76,10 @@ test('cash sale can be completed by keyboard, with change and receipt', async ({
   const search = page.getByRole('searchbox', { name: 'Tìm sản phẩm' })
   await search.focus()
   await page.keyboard.type('cf-001')
+  for (const filter of await page.getByRole('group', { name: 'Danh mục sản phẩm' }).getByRole('button').all()) {
+    await page.keyboard.press('Tab')
+    await expect(filter).toBeFocused()
+  }
   await page.keyboard.press('Tab')
   await expect(addCoffee(page)).toBeFocused()
   await page.keyboard.press('Enter')

@@ -3,37 +3,40 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BinMart POS</title>
+    <title>ShopLite | Quầy thu ngân</title>
+    <meta name="application-name" content="ShopLite" />
+    <link rel="icon" type="image/svg+xml" href="/shoplite.svg" />
   </head>
   <body>
     <header class="topbar">
-      <div class="page brand">
-        <span class="mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.65">
-            <path d="M4 9.5h16l-1.4 10H5.4L4 9.5Z" stroke-linejoin="round"/>
-            <path d="m8 9.5 4-5 4 5M10 13.2v2.7m4-2.7v2.7" stroke-linecap="round"/>
-          </svg>
-        </span>
-        <span>BinMart <span class="brand-pos">POS</span></span>
+      <div class="page bar-inner">
+        <a class="brand" href="/pos"><img src="/shoplite.svg" width="38" height="38" alt="" />ShopLite</a>
+        <div class="header-tools"><span class="demo-label">Chế độ demo</span><button class="theme-toggle" type="button" aria-pressed="false" hidden>Giao diện tối</button></div>
       </div>
     </header>
     <main class="page">
-      <h1>Quầy thu ngân</h1>
+      <h1 class="sr-only">Quầy thu ngân</h1>
+      <nav class="quick-nav" aria-label="Đi đến vùng thao tác">
+        <a href="#catalog-panel">Sản phẩm</a>
+        <a href="#cart-panel">Giỏ hàng</a>
+        <a href="#checkout-panel">Thanh toán</a>
+      </nav>
       <div class="workspace">
-        <section aria-labelledby="catalog-title">
-          <h2 id="catalog-title">Danh sách sản phẩm</h2>
-          <div id="catalog" aria-busy="true"></div>
+        <section id="catalog-panel" tabindex="-1" aria-labelledby="catalog-title">
+          <div class="panel-heading"><span>Quầy bán hàng</span><h2 id="catalog-title">Sản phẩm</h2></div>
+          <div id="catalog" aria-busy="true"><p data-loading>Đang mở danh sách sản phẩm…</p></div>
         </section>
-        <section aria-labelledby="cart-title">
-          <h2 id="cart-title">Giỏ hàng</h2>
-          <div id="cart" aria-busy="true"></div>
+        <section id="cart-panel" tabindex="-1" aria-labelledby="cart-title">
+          <div class="panel-heading"><span>Đơn đang tạo</span><h2 id="cart-title">Giỏ hàng</h2></div>
+          <div id="cart" aria-busy="true"><p data-loading>Đang mở giỏ hàng…</p></div>
         </section>
-        <section aria-labelledby="checkout-title">
-          <h2 id="checkout-title">Thanh toán</h2>
-          <div id="checkout" aria-busy="true"></div>
+        <section id="checkout-panel" tabindex="-1" aria-labelledby="checkout-title">
+          <div class="panel-heading"><span>Hoàn tất đơn hàng</span><h2 id="checkout-title">Thanh toán</h2></div>
+          <div id="checkout" aria-busy="true"><p data-loading>Đang mở thanh toán…</p></div>
         </section>
       </div>
     </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

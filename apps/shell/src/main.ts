@@ -4,7 +4,31 @@ import { listProducts, sendCheckout } from './api'
 import { mountRemote } from '@pos/domain/mount'
 import './styles.css'
 
+const themeToggle = document.querySelector<HTMLButtonElement>('.theme-toggle')!
+const themeKey = 'shoplite-theme'
+function setTheme(dark: boolean) {
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  themeToggle.setAttribute('aria-pressed', String(dark))
+}
+const prefersDark = matchMedia('(prefers-color-scheme: dark)')
+let savedTheme: string | null = null
+try { savedTheme = localStorage.getItem(themeKey) } catch { /* Storage may be blocked. */ }
+setTheme(savedTheme === 'dark' || (savedTheme !== 'light' && prefersDark.matches))
+prefersDark.addEventListener('change', ({ matches }) => {
+  if (savedTheme !== 'dark' && savedTheme !== 'light') setTheme(matches)
+})
+themeToggle.hidden = false
+themeToggle.addEventListener('click', () => {
+  const dark = themeToggle.getAttribute('aria-pressed') !== 'true'
+  setTheme(dark)
+  savedTheme = dark ? 'dark' : 'light'
+  try { localStorage.setItem(themeKey, savedTheme) } catch { /* Keep the current theme for this tab. */ }
+})
+
 const tags = { catalog: 'pos-catalog', cart: 'pos-cart', checkout: 'pos-checkout' } as const
+const regionLabels: Record<string, string> = {
+  'pos-catalog': 'danh sách sản phẩm', 'pos-cart': 'giỏ hàng', 'pos-checkout': 'phần thanh toán',
+}
 
 const context = createPosContext(listProducts, sendCheckout)
 
@@ -23,7 +47,7 @@ function loadRegion(region: HTMLElement, tag: string, manifest: unknown) {
     const message = document.createElement('div')
     message.dataset.loading = ''
     message.setAttribute('role', 'status')
-    message.textContent = 'Đang tải…'
+    message.textContent = `Đang mở ${regionLabels[tag]}…`
     region.replaceChildren(message)
     region.dataset.state = 'loading'
     region.setAttribute('aria-busy', 'true')
@@ -35,7 +59,7 @@ function loadRegion(region: HTMLElement, tag: string, manifest: unknown) {
     box.className = 'fallback'
     const message = document.createElement('p')
     message.setAttribute('role', 'alert')
-    message.textContent = 'Không thể mở vùng này.'
+    message.textContent = `Không mở được ${regionLabels[tag]}.`
     const button = document.createElement('button')
     button.textContent = buttonText
     button.addEventListener('click', retry, { once: true })

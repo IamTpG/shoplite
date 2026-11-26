@@ -4,7 +4,7 @@ import {
   formatVnd, reportFatal, reportReady, requireContext, type PaymentMethod, type PosContext, type PosErrorCode,
 } from '@pos/domain'
 import { posErrors } from '@pos/domain/messages'
-import { isVnd, PROMO_MINIMUM_VND } from '@pos/domain/pricing'
+import { isVnd, PROMO_CODE, PROMO_MINIMUM_VND } from '@pos/domain/pricing'
 import { saleLocked } from '@pos/domain/store'
 
 const props = defineProps<{ posContext: PosContext }>()
@@ -108,13 +108,7 @@ function newSale() {
       <button type="button" class="primary wide" @click="newSale">Đơn mới</button>
     </template>
     <template v-else>
-      <dl class="totals">
-        <div><dt>Tạm tính</dt><dd>{{ formatVnd(snapshot.subtotalVnd) }}</dd></div>
-        <div><dt>Giảm giá</dt><dd>{{ formatVnd(snapshot.discountVnd) }}</dd></div>
-        <div class="total"><dt>Tổng phải trả</dt><dd>{{ formatVnd(snapshot.totalVnd) }}</dd></div>
-      </dl>
-
-      <form class="section" @submit.prevent="applyPromo">
+      <form @submit.prevent="applyPromo">
         <label class="label" for="promo-code">Mã giảm giá</label>
         <div class="promo">
           <input id="promo-code" v-model="promoDraft" type="text" placeholder="Nhập mã"
@@ -122,6 +116,7 @@ function newSale() {
             :disabled="locked" @input="promoError = ''">
           <button type="submit" :disabled="locked || !promoDraft.trim()">Áp dụng</button>
         </div>
+        <p class="hint">Dùng mã <strong>{{ PROMO_CODE }}</strong> cho đơn từ {{ formatVnd(PROMO_MINIMUM_VND) }}.</p>
         <p v-if="promoError" id="promo-error" role="alert" class="error">{{ promoError }}</p>
         <p v-if="promoNotice" role="status" class="hint">{{ promoNotice }}</p>
         <div v-if="snapshot.promoCode" class="applied">
@@ -156,7 +151,11 @@ function newSale() {
             <p v-if="change !== null" class="hint">Tiền thừa <strong>{{ formatVnd(change) }}</strong></p>
           </template>
         </fieldset>
-
+        <dl class="totals">
+          <div><dt>Tạm tính</dt><dd>{{ formatVnd(snapshot.subtotalVnd) }}</dd></div>
+          <div><dt>Giảm giá</dt><dd class="discount">{{ formatVnd(snapshot.discountVnd) }}</dd></div>
+          <div class="total"><dt>Tổng phải trả</dt><dd>{{ formatVnd(snapshot.totalVnd) }}</dd></div>
+        </dl>
         <p v-if="paymentError && paymentError !== 'INVALID_PAYMENT' && paymentError !== 'INSUFFICIENT_CASH'" role="alert" class="error">
           {{ posErrors[paymentError] }}
         </p>
@@ -178,33 +177,44 @@ function newSale() {
 
 <style>
 :host { display: block; }
-.body { padding: 0 20px 20px; }
+.body { padding: 0 var(--pos-pad, 20px) var(--pos-pad, 20px); }
 dl, dd, h3 { margin: 0; }
-dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+dl > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin-bottom: 10px; }
 dt { color: var(--pos-muted, #464554); }
 dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.total { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--pos-border, #d5d7e2); font-weight: 700; }
-.total dd { font-size: 20px; color: var(--pos-primary, #2a14b4); }
+.totals { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--pos-border, #d5d7e2); }
+.discount { color: var(--pos-success, #14532d); }
+.total { margin: 12px 0 0; padding-top: 14px; border-top: 1px solid var(--pos-border, #d5d7e2); font-weight: 700; }
+.total dt { color: inherit; }
+.total dd { font-size: clamp(1.2rem, 1.55vw, 1.55rem); line-height: 1.2; color: var(--pos-primary, #3900b6); white-space: normal; overflow-wrap: anywhere; }
 .section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--pos-border, #d5d7e2); }
 .label, legend { font-weight: 650; display: block; margin-bottom: 6px; padding: 0; }
 .promo, .applied { display: flex; align-items: center; gap: 8px; }
 .applied { justify-content: space-between; margin-top: 8px; }
-.applied strong, .order-id { font-family: var(--pos-mono, monospace); }
+.applied strong, .order-id { font-family: var(--pos-mono, monospace); overflow-wrap: anywhere; white-space: normal; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.option { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 32px; }
+.option { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; margin-top: 8px; padding: 4px 10px; border: 1px solid var(--pos-outline, #777586); border-radius: 8px; }
+.option:has(:checked) { background: var(--pos-soft, #eeedf7); border-color: var(--pos-primary, #3900b6); font-weight: 650; }
+.option:hover:not(:has(:disabled)) { background: var(--pos-soft, #eeedf7); }
 .option input { accent-color: var(--pos-primary, #2a14b4); }
 .cash-label { margin-top: 8px; }
-input[type="text"] { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--pos-outline, #777586); border-radius: 8px; font: inherit; }
+input[type="text"] { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--pos-outline, #777586); border-radius: 8px; font: inherit; font-size: 1rem; background: var(--pos-surface, #fff); color: inherit; }
+input::placeholder { color: var(--pos-muted, #464554); }
 input[aria-invalid="true"] { border-color: var(--pos-error, #ba1a1a); }
-button { border: 1px solid var(--pos-primary, #2a14b4); border-radius: 8px; padding: 8px 10px; font: inherit; color: var(--pos-primary, #2a14b4); background: white; cursor: pointer; white-space: nowrap; }
-.primary { background: var(--pos-primary, #2a14b4); color: white; font-weight: 650; white-space: normal; }
+button { border: 1px solid var(--pos-outline, #777586); border-radius: 8px; min-height: 44px; padding: 8px 10px; font: inherit; color: inherit; background: var(--pos-surface, #fff); white-space: nowrap; }
+button, .option, .option input { cursor: pointer; }
+button:hover:not(:disabled) { background: var(--pos-soft, #eeedf7); }
+button:active:not(:disabled), .option:active:not(:has(:disabled)) { outline: 1px solid currentColor; }
+.primary { background: var(--pos-primary, #2a14b4); color: var(--pos-on-primary, #fff); border-color: transparent; font-weight: 700; white-space: normal; }
+.primary:hover:not(:disabled) { background: var(--pos-primary-hover, #20108c); }
 .wide { width: 100%; margin-top: 10px; }
-button:disabled { cursor: default; background: #f0ecf8; color: var(--pos-muted, #464554); border-color: var(--pos-border, #d5d7e2); }
+button:disabled, input[type="text"]:disabled { background: var(--pos-soft, #eeedf7); color: var(--pos-muted, #464554); border-color: var(--pos-border, #d5d7e2); }
+:disabled, .option:has(:disabled) { cursor: not-allowed; }
 input:focus-visible, button:focus-visible { outline: 2px solid var(--pos-primary, #2a14b4); outline-offset: 2px; }
 .error, .hint { margin: 8px 0 0; }
 .error { color: var(--pos-error, #ba1a1a); }
 .hint { color: var(--pos-muted, #464554); }
-.receipt { background: #dcfce7; color: #14532d; padding: 12px; border-radius: 8px; }
+.receipt { background: var(--pos-success-bg, #dcfce7); color: var(--pos-success, #14532d); padding: 12px; border-radius: 8px; }
 .receipt dt { color: inherit; }
 .receipt h3 { margin-bottom: 12px; font-size: 15px; }
 .receipt dl > div:last-child { margin-bottom: 0; }
