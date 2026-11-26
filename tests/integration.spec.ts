@@ -1,8 +1,12 @@
+import { execFile } from 'node:child_process'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 import { expect, test, type Page } from '@playwright/test'
 import type { PosSnapshot, PosContext } from '@pos/domain'
+
+const runFile = promisify(execFile)
 
 const ready = '[data-state="ready"]'
 
@@ -250,4 +254,29 @@ test('manifest load failure puts all three regions into failed state', async ({ 
   await page.goto('/pos')
   await expect(page.locator('[data-state="failed"]')).toHaveCount(3)
   await expect(page.locator(ready)).toHaveCount(0)
+})
+
+test('a staged broken 1.0.1 release fails only its region while keeping other remotes working', async ({ page }) => {
+  const version = '1.0.1-broken-test'
+  const stagedDir = fileURLToPath(new URL(`../services/bff/dist/mfe/catalog/${version}/`, import.meta.url))
+  const scriptPath = fileURLToPath(new URL('../scripts/stage-broken.mjs', import.meta.url))
+
+  try {
+    await runFile(process.execPath, [scriptPath, 'catalog', version, 'runtime'])
+    await page.route('**/mfe-manifest.json', async (route) => {
+      const response = await route.fetch()
+      const manifest = await response.json()
+      manifest.catalog.entry = `/mfe/catalog/${version}/main.js`
+      await route.fulfill({ response, json: manifest })
+    })
+
+    await page.goto('/pos')
+    await expect(page.locator('#catalog')).toHaveAttribute('data-state', 'failed')
+    await expect(page.locator('#cart')).toHaveAttribute('data-state', 'ready')
+    await expect(page.locator('#checkout')).toHaveAttribute('data-state', 'ready')
+    await expect(page.getByText('Chưa có sản phẩm trong giỏ.')).toBeVisible()
+    await expect(page.getByText('Tổng phải trả')).toBeVisible()
+  } finally {
+    await rm(stagedDir, { recursive: true, force: true })
+  }
 })
